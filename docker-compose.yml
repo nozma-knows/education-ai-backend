@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:10.3
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=Vjk*9p!Xo3a2o3jT
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - '5679:5432'
+volumes:
+  postgres:
