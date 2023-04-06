@@ -30,13 +30,71 @@ input LoginInput {
   password: String!
 }
 
+type PrereqTopic {
+  id: ID!
+  prereqId: String!
+  prereq: Prereq!
+  title: String!
+  description: String!
+}
+
+type Prereq {
+  id: ID!
+  courseId: String!
+  course: Course!
+  title: String!
+  description: String!
+  topics: [PrereqTopic]
+}
+
+type Lesson {
+  id: ID!
+  unitId: String!
+  unit: Unit!
+  title: String!
+  description: String!
+  content: String!
+}
+
+type Unit {
+  id: ID!
+  courseId: String!
+  course: Course!
+  title: String!
+  description: String!
+  lessons: Lesson
+}
+
+type Course {
+  id: ID!
+  createdAt: String!
+  updatedAt: String!
+  authorId: String!
+  auhtor: User!
+  title: String!
+  description: String!
+  prereqs: Prereq!
+  units: Unit
+  intendedOutcomes: String!
+}
+
+type CreateCourseInput {
+  authorId: ID!
+  title: String!
+  description: String!
+}
+
 type Query {
   users: [User]
   session(id: String!): Session
+  course(id: String!): Course
+  courses(authorId: String!): [Course]
 }
 
 type Mutation {
   createLogin(input: CreateLoginInput!): Login!
   login(input: LoginInput!): Session!
   logout: Session!
+  createCourse(input: CreateCourseInput!): Course!
+  deleteCourse(id: String!): Course!
 }
