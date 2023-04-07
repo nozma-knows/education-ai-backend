@@ -8,7 +8,12 @@ const crypto = require("crypto");
 
 export const loginMutationResolvers: LoginResolvers = {
   // Create Login Mutation Resolver
-  createLogin: async (_parent: any, args: { input: CreateLoginInput }) => {
+  createLogin: async (
+    _parent: any,
+    args: { input: CreateLoginInput },
+    contextValue: any
+  ) => {
+    const { prisma } = contextValue;
     // Grab args
     const { firstName, lastName, email, password } = args.input;
 
@@ -16,7 +21,6 @@ export const loginMutationResolvers: LoginResolvers = {
     if (!firstName || !lastName || !email || !password) {
       throw new Error("Required parameter is missing.");
     }
-    const prisma = new PrismaClient();
     // Create user
     const user = await prisma.user.create({
       data: {

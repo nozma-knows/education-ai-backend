@@ -10,13 +10,12 @@ const jwt = require("jsonwebtoken");
 
 export const sessionQueryResolvers: SessionResolvers = {
   session: (parents: any, args: { id: string }, contextValue: any) => {
+    const { prisma } = contextValue;
     const { id } = args;
 
     if (!id) {
       throw new Error("Required parameter is missing.");
     }
-
-    const prisma = new PrismaClient();
 
     const session = prisma.session.findUnique({
       where: {
@@ -40,6 +39,8 @@ export const sessionMutationResolvers: SessionResolvers = {
     args: { input: LoginInput },
     contextValue: any
   ) => {
+    const { prisma } = contextValue;
+
     // Grab args
     const { email, password } = args.input;
 
@@ -47,7 +48,6 @@ export const sessionMutationResolvers: SessionResolvers = {
     if (!email || !password) {
       throw new Error("Required parameter is missing.");
     }
-    const prisma = new PrismaClient();
 
     // Grab login
     const login = await prisma.login.findUnique({
@@ -111,14 +111,13 @@ export const sessionMutationResolvers: SessionResolvers = {
 
   // Logout Mutaiton
   logout: async (parent: any, args: any, contextValue: any) => {
+    const { prisma } = contextValue;
     // Grab userId from context
     const { userId, token } = contextValue;
     // Grab userId error handling
     if (!userId) {
       throw new Error("Must be authenticated to call this endpoint.");
     }
-
-    const prisma = new PrismaClient();
 
     // Grab session from token
     const session = await prisma.session.findUnique({

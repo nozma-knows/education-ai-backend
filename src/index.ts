@@ -4,6 +4,7 @@ import { ApolloServer } from "apollo-server-express";
 import { readFileSync } from "fs";
 import { resolvers } from "./graph/resolvers";
 import { expressjwt } from "express-jwt";
+import { PrismaClient } from "@prisma/client";
 
 const typeDefs = readFileSync("./src/graph/schema.graphql", {
   encoding: "utf-8",
@@ -20,12 +21,15 @@ const startServer = async () => {
   );
   const httpServer = createServer(app);
 
+  const prisma = new PrismaClient();
+
   const apolloServer = new ApolloServer({
     typeDefs,
     resolvers,
     context: ({ req }: any) => {
       if (req.auth) {
         return {
+          prisma,
           userId: req.auth.userId,
           expiry: req.auth.expiry,
           token: req.headers.authorization.split("Bearer ")[1],

@@ -1,20 +1,13 @@
 import {
   CourseResolvers,
   CreateCourseInput,
-  Prereq,
 } from "../../__generated__/resolvers-types";
-import { PrismaClient } from "@prisma/client";
-import { OpenAI } from "langchain/llms";
-import { PromptTemplate } from "langchain";
-import { StructuredOutputParser } from "langchain/output_parsers";
-import { z } from "zod";
 const crypto = require("crypto");
-
-const prisma = new PrismaClient();
 
 export const courseQueryResolvers: CourseResolvers = {
   // Course query resolver
-  course: async (_parent: any, args: { id: string }) => {
+  course: async (_parent: any, args: { id: string }, contextValue: any) => {
+    const { prisma } = contextValue;
     // Grab args
     const { id } = args;
 
@@ -36,7 +29,12 @@ export const courseQueryResolvers: CourseResolvers = {
     return course;
   },
   // Courses query resolver
-  courses: async (_parent: any, args: { authorId: string }) => {
+  courses: async (
+    _parent: any,
+    args: { authorId: string },
+    contextValue: any
+  ) => {
+    const { prisma } = contextValue;
     // Grab args
     const { authorId } = args;
 
@@ -61,7 +59,14 @@ export const courseQueryResolvers: CourseResolvers = {
 
 export const courseMutationResolvers: CourseResolvers = {
   // Create course mutation resolver
-  createCourse: async (_parent: any, args: { input: CreateCourseInput }) => {
+  createCourse: async (
+    _parent: any,
+    args: { input: CreateCourseInput },
+    contextValue: any
+  ) => {
+    const { prisma } = contextValue;
+    const { OpenAI } = await import("langchain/llms");
+    const { PromptTemplate } = await import("langchain");
     // Grab args
     const { authorId, title, description } = args.input;
 
@@ -82,50 +87,30 @@ export const courseMutationResolvers: CourseResolvers = {
       throw new Error("Failed to create model");
     }
 
-    // Create parser
-    const parser = StructuredOutputParser.fromZodSchema(
-      z.object({
-        title: z.string().describe("Name of the course"),
-        description: z.string().describe("Description of the course"),
-        prereqs: z
-          .array(
-            z.object({
-              title: z.string().describe("Name of the prerequisite"),
-              description: z
-                .string()
-                .describe("Description of the prerequisite"),
-              topics: z
-                .array(z.object({ title: z.string(), description: z.string() }))
-                .describe("Topics covered in the prerequisite"),
-            })
-          )
-          .describe("Prerequisites for the course"),
-        units: z
-          .array(
-            z.object({
-              title: z.string().describe("Name of unit"),
-              sections: z.array(
-                z.object({
-                  title: z.string().describe("Name of unit"),
-                  description: z.string().describe("Description of unit"),
-                })
-              ),
-            })
-          )
-          .describe("Units in the course"),
-        intendedOutcomes: z
-          .array(z.string())
-          .describe("Intended outcomes for the course"),
-      })
-    );
-
-    // Create parser error handling
-    if (!parser) {
-      throw new Error("Failed to create parser");
-    }
-
-    // Create instructions for formatting openai response
-    const formatInstructions = parser.getFormatInstructions();
+    const formatInstructions = `json
+{
+        "title": string // Name of the course
+        "description": string // Description of the course
+        "prereqs": {
+                "title": string // Name of the prerequisite
+                "description": string // Description of the prerequisite
+                "topics": {
+                        "title": string
+                        "description": string
+                }[] // Topics covered in the prerequisite
+        }[] // Prerequisites for the course
+        "units": {
+                "title": string // Name of module
+                "description: string // Description of module
+                "lessons": {
+                        "title": string // Name of section
+                        "description": string // Description of section
+                        "content": string // Content of section
+                }[]
+        }[] // Modules in the course
+        "intendedOutcomes": string[] // Intended outcomes for the course
+}
+`;
 
     // Create formatInstructions error handling
     if (!formatInstructions) {
@@ -152,81 +137,15 @@ export const courseMutationResolvers: CourseResolvers = {
     if (!prompt) {
       throw new Error("Failed to create prompt");
     }
-
     // Call openai
     const result = await model.call(prompt);
-    const parsedResult = parser.parse(result);
-
-    // Openai results error handling
-    if (!parsedResult) {
-      throw new Error("Failed to create course");
-    }
-
-    // Create courseId
-    const courseId: string = crypto.randomUUID();
-
-    // Create courseId error handling
-    if (!courseId) {
-      throw new Error("Failed to create courseId");
-    }
-
-    // Create prereqId
-    const prereqId: string = crypto.randomUUID();
-
-    // Create prereqId error handling
-    if (!prereqId) {
-      throw new Error("Failed to create prereqId");
-    }
-
-    // Create prereqs
-    const prereqs: any = parsedResult.prereqs.map((prereq: any) => {
-      return {
-        id: prereqId,
-        courseId,
-        title: prereq.title as string,
-        description: prereq.description as string,
-        topics: prereq.topics.map((topic: any) => {
-          return {
-            id: crypto.randomUUID() as string,
-            prereqId,
-            title: topic.title,
-            description: topic.description,
-          };
-        }),
-      };
-    });
-
-    // Create prereqs error handling
-    if (!prereqs) {
-      throw new Error("Failed to create prereqs");
-    }
-
-    // Create units
-    const units: any = parsedResult.units.map((unit: any) => {
-      return {
-        id: crypto.randomUUID() as string,
-        courseId,
-        title: unit.title as string,
-        description: unit.description as string,
-        lessons: null,
-      };
-    });
-
-    // Create units error handling
-    if (!units) {
-      throw new Error("Failed to create units");
-    }
 
     // Create course
     const course = await prisma.course.create({
       data: {
-        id: courseId,
+        id: crypto.randomUUID(),
         authorId,
-        title: parsedResult.title,
-        description: parsedResult.description,
-        prereqs,
-        units,
-        intendedOutcomes: parsedResult.intendedOutcomes,
+        content: result,
       },
     });
 
@@ -238,7 +157,12 @@ export const courseMutationResolvers: CourseResolvers = {
     return course;
   },
   // Delete course mutation resolver
-  deleteCourse: async (_parent: any, args: { id: string }) => {
+  deleteCourse: async (
+    _parent: any,
+    args: { id: string },
+    contextValue: any
+  ) => {
+    const { prisma } = contextValue;
     // Grab args
     const { id } = args;
 

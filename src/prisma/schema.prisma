@@ -38,50 +38,11 @@ model Session {
   token     String   @unique
 }
 
-model PrereqTopic {
-  id         String  @id @default(uuid())
-  Prereq     Prereq? @relation(fields: [prereqId], references: [id])
-  prereqId   String?
-  title      String
-  desciption String
-}
-
-model Prereq {
-  id         String        @id @default(uuid())
-  course     Course?       @relation(fields: [courseId], references: [id])
-  courseId   String?
-  title      String
-  desciption String
-  topics     PrereqTopic[]
-}
-
-model Lesson {
-  id         String  @id @default(uuid())
-  unit       Unit?   @relation(fields: [unitId], references: [id])
-  unitId     String?
-  title      String
-  desciption String
-  content    String
-}
-
-model Unit {
-  id          String   @id @default(uuid())
-  course      Course?  @relation(fields: [courseId], references: [id])
-  courseId    String?
-  title       String
-  description String
-  lessons     Lesson[]
-}
-
 model Course {
-  id               String   @id @default(uuid())
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  authorId         String
-  author           User     @relation(fields: [authorId], references: [id])
-  title            String
-  description      String
-  prereqs          Prereq[]
-  units            Unit[]
-  intendedOutcomes String[]
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  content   String
 }
