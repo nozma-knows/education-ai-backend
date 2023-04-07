@@ -30,13 +30,77 @@ input LoginInput {
   password: String!
 }
 
+# type Course {
+#   id: ID!
+#   createdAt: String!
+#   updatedAt: String!
+#   authorId: String!
+#   auhtor: User!
+#   content: String!
+# }
+
+enum Status {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+type PrereqTopic {
+  id: ID!
+  createdAt: String!
+  updatedAt: String!
+  prereqId: String!
+  prereq: CoursePrereq!
+  title: String!
+  description: String!
+}
+
+type CoursePrereq {
+  id: ID!
+  createdAt: String!
+  updatedAt: String!
+  courseId: String!
+  course: Course!
+  title: String!
+  description: String!
+  topics: [PrereqTopic]
+}
+
+type UnitLesson {
+  id: ID!
+  createdAt: String!
+  updatedAt: String!
+  unitId: String!
+  unit: CourseUnit!
+  title: String!
+  content: String
+  status: Status
+}
+
+type CourseUnit {
+  id: ID!
+  createdAt: String!
+  updatedAt: String!
+  courseId: String!
+  course: Course!
+  title: String!
+  description: String!
+  lessons: [UnitLesson]
+  status: Status
+}
+
 type Course {
   id: ID!
   createdAt: String!
   updatedAt: String!
   authorId: String!
-  auhtor: User!
-  content: String!
+  author: User!
+  title: String!
+  description: String!
+  prereqs: [CoursePrereq]
+  units: [CourseUnit]
+  intendedOutcomes: [String]!
+  status: Status
 }
 
 input CreateCourseInput {
