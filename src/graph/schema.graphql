@@ -63,7 +63,7 @@ type CoursePrereq {
   course: Course!
   title: String!
   description: String!
-  topics: [PrereqTopic]
+  topics: [PrereqTopic]!
 }
 
 type UnitLesson {
@@ -73,8 +73,8 @@ type UnitLesson {
   unitId: String!
   unit: CourseUnit!
   title: String!
-  content: String
-  status: Status
+  content: String!
+  status: Status!
 }
 
 type CourseUnit {
@@ -85,8 +85,8 @@ type CourseUnit {
   course: Course!
   title: String!
   description: String!
-  lessons: [UnitLesson]
-  status: Status
+  lessons: [UnitLesson]!
+  status: Status!
 }
 
 type Course {
@@ -97,8 +97,8 @@ type Course {
   author: User!
   title: String!
   description: String!
-  prereqs: [CoursePrereq]
-  units: [CourseUnit]
+  prereqs: [CoursePrereq]!
+  units: [CourseUnit]!
   intendedOutcomes: [String]!
   status: Status
 }

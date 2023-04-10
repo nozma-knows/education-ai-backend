@@ -31,10 +31,10 @@ export type Course = {
   description: Scalars["String"];
   id: Scalars["ID"];
   intendedOutcomes: Array<Maybe<Scalars["String"]>>;
-  prereqs?: Maybe<Array<Maybe<CoursePrereq>>>;
+  prereqs: Array<Maybe<CoursePrereq>>;
   status?: Maybe<Status>;
   title: Scalars["String"];
-  units?: Maybe<Array<Maybe<CourseUnit>>>;
+  units: Array<Maybe<CourseUnit>>;
   updatedAt: Scalars["String"];
 };
 
@@ -46,7 +46,7 @@ export type CoursePrereq = {
   description: Scalars["String"];
   id: Scalars["ID"];
   title: Scalars["String"];
-  topics?: Maybe<Array<Maybe<PrereqTopic>>>;
+  topics: Array<Maybe<PrereqTopic>>;
   updatedAt: Scalars["String"];
 };
 
@@ -57,8 +57,8 @@ export type CourseUnit = {
   createdAt: Scalars["String"];
   description: Scalars["String"];
   id: Scalars["ID"];
-  lessons?: Maybe<Array<Maybe<UnitLesson>>>;
-  status?: Maybe<Status>;
+  lessons: Array<Maybe<UnitLesson>>;
+  status: Status;
   title: Scalars["String"];
   updatedAt: Scalars["String"];
 };
@@ -159,10 +159,10 @@ export enum Status {
 
 export type UnitLesson = {
   __typename?: "UnitLesson";
-  content?: Maybe<Scalars["String"]>;
+  content: Scalars["String"];
   createdAt: Scalars["String"];
   id: Scalars["ID"];
-  status?: Maybe<Status>;
+  status: Status;
   title: Scalars["String"];
   unit: CourseUnit;
   unitId: Scalars["String"];
@@ -342,14 +342,14 @@ export type CourseResolvers<
     ContextType
   >;
   prereqs?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes["CoursePrereq"]>>>,
+    Array<Maybe<ResolversTypes["CoursePrereq"]>>,
     ParentType,
     ContextType
   >;
   status?: Resolver<Maybe<ResolversTypes["Status"]>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
   units?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes["CourseUnit"]>>>,
+    Array<Maybe<ResolversTypes["CourseUnit"]>>,
     ParentType,
     ContextType
   >;
@@ -368,7 +368,7 @@ export type CoursePrereqResolvers<
   id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
   title?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
   topics?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes["PrereqTopic"]>>>,
+    Array<Maybe<ResolversTypes["PrereqTopic"]>>,
     ParentType,
     ContextType
   >;
@@ -386,11 +386,11 @@ export type CourseUnitResolvers<
   description?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
   id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
   lessons?: Resolver<
-    Maybe<Array<Maybe<ResolversTypes["UnitLesson"]>>>,
+    Array<Maybe<ResolversTypes["UnitLesson"]>>,
     ParentType,
     ContextType
   >;
-  status?: Resolver<Maybe<ResolversTypes["Status"]>, ParentType, ContextType>;
+  status?: Resolver<ResolversTypes["Status"], ParentType, ContextType>;
   title?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -493,10 +493,10 @@ export type UnitLessonResolvers<
   ContextType = Context,
   ParentType extends ResolversParentTypes["UnitLesson"] = ResolversParentTypes["UnitLesson"]
 > = ResolversObject<{
-  content?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>;
+  content?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
   id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
-  status?: Resolver<Maybe<ResolversTypes["Status"]>, ParentType, ContextType>;
+  status?: Resolver<ResolversTypes["Status"], ParentType, ContextType>;
   title?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
   unit?: Resolver<ResolversTypes["CourseUnit"], ParentType, ContextType>;
   unitId?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
