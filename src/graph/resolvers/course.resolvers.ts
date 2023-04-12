@@ -457,13 +457,8 @@ export const courseMutationResolvers: CourseResolvers = {
 
     // Create promptTemplate
     const promptTemplate = new PromptTemplate({
-      template: `Design a lesson for a course with the following title: "{courseTitle}" and description: "{courseDescription}". The title of the lesson is "{lessonTitle}". The topics of the lesson are "{topics}". The output should be in markdown format.`,
-      inputVariables: [
-        "courseTitle",
-        "courseDescription",
-        "lessonTitle",
-        "topics",
-      ],
+      template: `Design a lesson for a course on "{courseTitle}". The title of the lesson is "{lessonTitle}", and it should cover the following topics: "{topics}". The output should be in markdown format.`,
+      inputVariables: ["courseTitle", "lessonTitle", "topics"],
     });
 
     // Create promptTemplate error handling
