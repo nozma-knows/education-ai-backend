@@ -26,17 +26,13 @@ const startServer = async () => {
   const apolloServer = new ApolloServer({
     typeDefs,
     resolvers,
-    context: ({ req }: any) => {
-      if (req.auth) {
-        return {
-          prisma,
-          userId: req.auth.userId,
-          expiry: req.auth.expiry,
-          token: req.headers.authorization.split("Bearer ")[1],
-        };
-      }
-      return {};
-    },
+    context: async ({ req, res }) => ({
+      prisma, // prisma client
+      userId: req.headers.userId, // user id from token
+      expiry: req.headers.expiry, // expiry from token
+      // token: req.headers.token, // token
+      token: req.headers.authorization?.split("Bearer ")[1], // token
+    }),
   });
 
   await apolloServer.start();

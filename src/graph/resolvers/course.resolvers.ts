@@ -1,13 +1,36 @@
+import { PrismaClient } from "@prisma/client";
 import {
+  CoursePrereq,
   CourseResolvers,
+  CourseUnit,
   CreateCourseInput,
+  Maybe,
+  PrereqTopic,
+  Status,
+  UnitLesson,
 } from "../../__generated__/resolvers-types";
+import { z } from "zod";
+const { OpenAI, PromptTemplate } = require("langchain");
+const { StructuredOutputParser } = require("langchain/output_parsers");
 const crypto = require("crypto");
+
+interface Context {
+  prisma: PrismaClient;
+  userId: string;
+  expiry: string;
+  token: string;
+}
 
 export const courseQueryResolvers: CourseResolvers = {
   // Course query resolver
-  course: async (_parent: any, args: { id: string }, contextValue: any) => {
+  course: async (_parent: any, args: { id: string }, contextValue: Context) => {
+    // Grab prisma client
     const { prisma } = contextValue;
+
+    if (!prisma) {
+      throw new Error("Failed to find prisma client.");
+    }
+
     // Grab args
     const { id } = args;
 
@@ -19,6 +42,18 @@ export const courseQueryResolvers: CourseResolvers = {
     // Find course
     const course = await prisma.course.findUnique({
       where: { id },
+      include: {
+        prereqs: {
+          include: {
+            topics: true,
+          },
+        },
+        units: {
+          include: {
+            lessons: true,
+          },
+        },
+      },
     });
 
     // Find course error handling
@@ -34,7 +69,13 @@ export const courseQueryResolvers: CourseResolvers = {
     args: { authorId: string },
     contextValue: any
   ) => {
+    // Grab prisma client
     const { prisma } = contextValue;
+
+    if (!prisma) {
+      throw new Error("Failed to find prisma client.");
+    }
+
     // Grab args
     const { authorId } = args;
 
@@ -62,17 +103,22 @@ export const courseMutationResolvers: CourseResolvers = {
   createCourse: async (
     _parent: any,
     args: { input: CreateCourseInput },
-    contextValue: any
+    contextValue: Context
   ) => {
+    // Grab prisma client
     const { prisma } = contextValue;
-    const { OpenAI } = await import("langchain/llms");
-    const { PromptTemplate } = await import("langchain");
+
+    // Grab prisma client error handling
+    if (!prisma) {
+      throw new Error("Failed to find prisma client.");
+    }
+
     // Grab args
     const { authorId, title, description } = args.input;
 
     // Grab args error handling
     if (!authorId || !title || !description) {
-      throw new Error("Missing required fields");
+      throw new Error("Missing required fields.");
     }
 
     // Create model
@@ -87,47 +133,77 @@ export const courseMutationResolvers: CourseResolvers = {
       throw new Error("Failed to create model");
     }
 
-    const formatInstructions = `json
-{
-        "title": string // Name of the course
-        "description": string // Description of the course
-        "prereqs": {
-                "title": string // Name of the prerequisite
-                "description": string // Description of the prerequisite
-                "topics": {
-                        "title": string
-                        "description": string
-                }[] // Topics covered in the prerequisite
-        }[] // Prerequisites for the course
-        "units": {
-                "title": string // Name of module
-                "description: string // Description of module
-                "lessons": {
-                        "title": string // Name of section
-                        "description": string // Description of section
-                        "content": string // Content of section
-                }[]
-        }[] // Modules in the course
-        "intendedOutcomes": string[] // Intended outcomes for the course
-}
-`;
+    // Create parser
+    const parser = StructuredOutputParser.fromZodSchema(
+      z.object({
+        title: z.string().describe("Title of the course"),
+        description: z.string().describe("Description of the course"),
+        prereqs: z
+          .array(
+            z.object({
+              title: z.string().describe("Title of the course prerequsiite"),
+              description: z
+                .string()
+                .describe("Description of the course prerequisite"),
+              topics: z
+                .array(
+                  z.object({
+                    title: z
+                      .string()
+                      .describe("Title of the course prerequisite topic"),
+                    description: z
+                      .string()
+                      .describe("Description of the course prerequisite topic"),
+                  })
+                )
+                .describe("Topics of the course prerequisite"),
+            })
+          )
+          .describe("Prerequisites of the course"),
+        units: z
+          .array(
+            z.object({
+              title: z.string().describe("Title of the course unit"),
+              description: z
+                .string()
+                .describe("Description of the course unit"),
+              lessons: z.array(
+                z.object({
+                  title: z.string().describe("Title of the course unit lesson"),
+                })
+              ),
+            })
+          )
+          .describe("Units of the course"),
+        intended_outcomes: z
+          .array(z.string().describe("Intended outcome of the course"))
+          .describe("Intended outcomes of the course"),
+      })
+    );
+
+    // Create parser error handling
+    if (!parser) {
+      throw new Error("Failed to create parser");
+    }
+
+    // Create formatInstructions
+    const formatInstructions = parser.getFormatInstructions();
 
     // Create formatInstructions error handling
     if (!formatInstructions) {
       throw new Error("Failed to create formatInstructions");
     }
 
-    // Create prompt template
+    // Create promptTemplate
     const promptTemplate = new PromptTemplate({
-      template:
-        "Create a syllabus for a course with the following title: {title} and description: {description} and format: {format_instructions}.",
+      template: `Create a syllabus for a course with the following title: "{title}" and description: "{description}" and format: {format_instructions}.`,
       inputVariables: ["title", "description"],
       partialVariables: { format_instructions: formatInstructions },
     });
 
-    // Create prompt template error handling
+    // Create promptTemplate error handling
     if (!promptTemplate) {
-      throw new Error("Failed to create prompt template");
+      throw new Error("Failed to create promptTemplate");
     }
 
     // Create prompt
@@ -137,25 +213,227 @@ export const courseMutationResolvers: CourseResolvers = {
     if (!prompt) {
       throw new Error("Failed to create prompt");
     }
-    // Call openai
+
+    // Query openai
     const result = await model.call(prompt);
 
+    // Query openai error handling
+    if (!result) {
+      throw new Error("Failed to call openai");
+    }
+
+    console.log("result: ", result);
+    // Parse result
+    const parsedResult = await parser.parse(result);
+
+    // Parse result error handling
+    if (!parsedResult) {
+      throw new Error("Failed to parse result");
+    }
+
     // Create course
+    const courseId = crypto.randomUUID();
     const course = await prisma.course.create({
       data: {
-        id: crypto.randomUUID(),
+        id: courseId,
         authorId,
-        content: result,
+        title,
+        description,
+        status: Status.Pending,
+        intendedOutcomes: parsedResult.intended_outcomes,
       },
     });
 
     // Create course error handling
     if (!course) {
-      throw new Error("Failed to create course");
+      throw new Error("Failed to create course.");
     }
 
-    return course;
+    // Create course prereqs
+    const prereqs: any[] = [];
+    await prisma.coursePrereq.createMany({
+      data: parsedResult.prereqs.map((p: CoursePrereq) => {
+        const prereqId = crypto.randomUUID();
+        const prereq = {
+          id: prereqId,
+          courseId: course.id,
+          title: p.title,
+          description: p.description,
+          topics: p.topics,
+        };
+        prereqs.push(prereq);
+        return {
+          id: prereqId,
+          courseId: course.id,
+          title: p.title,
+          description: p.description,
+        };
+      }),
+    });
+
+    // Create course prereqs error handling
+    if (!prereqs) {
+      throw new Error("Failed to create course prereqs");
+    }
+
+    // Create course prereq topics and update prereqs with topics
+    prereqs.map(async (prereq: CoursePrereq) => {
+      const topicIds: string[] = [];
+      await prisma.prereqTopic.createMany({
+        data: prereq.topics.map((topic: Maybe<PrereqTopic>) => {
+          const topicId = crypto.randomUUID();
+          topicIds.push(topicId);
+          return {
+            id: topicId,
+            prereqId: prereq.id,
+            title: topic ? topic.title : "",
+            description: topic ? topic.description : "",
+          };
+        }),
+      });
+      await prisma.coursePrereq.update({
+        where: {
+          id: prereq.id,
+        },
+        data: {
+          topics: {
+            connect: topicIds.map((id: string) => ({ id })),
+          },
+        },
+      });
+    });
+
+    // Create course units
+    const units: any[] = [];
+    await prisma.courseUnit.createMany({
+      data: parsedResult.units.map((u: CourseUnit) => {
+        const unitId = crypto.randomUUID();
+        const unit = {
+          id: unitId,
+          courseId: course.id,
+          title: u.title,
+          description: u.description,
+          lessons: u.lessons,
+          status: Status.Pending,
+        };
+        units.push(unit);
+        return {
+          id: unitId,
+          courseId: course.id,
+          title: u.title,
+          description: u.description,
+          status: Status.Pending,
+        };
+      }),
+    });
+
+    // Create course units error handling
+    if (!units) {
+      throw new Error("Failed to create course prereqs");
+    }
+
+    // Create course prereq topics and update prereqs with topics
+    units.map(async (unit: CourseUnit) => {
+      const lessonIds: string[] = [];
+      await prisma.unitLesson.createMany({
+        data: unit.lessons.map((lesson: Maybe<UnitLesson>) => {
+          const lessonId = crypto.randomUUID();
+          lessonIds.push(lessonId);
+          return {
+            id: lessonId,
+            unitId: unit.id,
+            title: lesson ? lesson.title : "",
+            content: "",
+            status: Status.Pending,
+          };
+        }),
+      });
+      await prisma.courseUnit.update({
+        where: {
+          id: unit.id,
+        },
+        data: {
+          lessons: {
+            connect: lessonIds.map((id: string) => ({ id })),
+          },
+        },
+      });
+    });
+
+    // // Create course units
+    // const units: any[] = [];
+    // await prisma.courseUnit.createMany({
+    //   data: parsedResult.units.map((u: CourseUnit) => {
+    //     const unitId = crypto.randomUUID();
+    //     const unit = {
+    //       id: unitId,
+    //       courseId: course.id,
+    //       title: u.title,
+    //       description: u.description,
+    //       lessons: u.lessons,
+    //       status: u.status,
+    //     };
+    //     units.push(unit);
+    //     return {
+    //       id: crypto.randomUUID(),
+    //       courseId: course.id,
+    //       title: unit.title,
+    //       description: unit.description,
+    //       status: Status.Pending,
+    //     };
+    //   }),
+    // });
+
+    // // Create course units error handling
+    // if (!units) {
+    //   throw new Error("Failed to create course units");
+    // }
+
+    // // Create course unit lessons and update units with lessons
+    // units.map(async (unit: CourseUnit) => {
+    //   console.log("unit: ", unit);
+    //   console.log("lessons for unit: ", unit.lessons);
+    //   const lessonIds: string[] = [];
+    //   await prisma.unitLesson.createMany({
+    //     data: unit.lessons.map((lesson: Maybe<UnitLesson>) => {
+    //       console.log("lesson: ", lesson);
+    //       const lessonId = crypto.randomUUID();
+    //       lessonIds.push(lessonId);
+    //       return {
+    //         id: lessonId,
+    //         unitId: unit.id,
+    //         title: lesson ? lesson.title : "",
+    //         content: "",
+    //         status: Status.Pending,
+    //       };
+    //     }),
+    //   });
+    //   await prisma.courseUnit.update({
+    //     where: {
+    //       id: unit.id,
+    //     },
+    //     data: {
+    //       lessons: {
+    //         connect: lessonIds.map((id: string) => ({ id })),
+    //       },
+    //     },
+    //   });
+    // });
+
+    // Update course with prereqs and units
+    await prisma.course.update({
+      where: {
+        id: courseId,
+      },
+      data: {
+        prereqs: { connect: prereqs.map((prereq) => ({ id: prereq.id })) },
+        units: { connect: units.map((unit) => ({ id: unit.id })) },
+      },
+    });
+
+    return course; // Return course
   },
+
   // Delete course mutation resolver
   deleteCourse: async (
     _parent: any,
