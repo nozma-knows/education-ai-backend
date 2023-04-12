@@ -199,7 +199,7 @@ export const courseMutationResolvers: CourseResolvers = {
 
     // Create promptTemplate
     const promptTemplate = new PromptTemplate({
-      template: `Create a syllabus for a course with the following title: "{title}" and description: "{description}" and format: {format_instructions}.`,
+      template: `Generate a course with the following title: "{title}" and description: "{description}" and format: {format_instructions}.`,
       inputVariables: ["title", "description"],
       partialVariables: { format_instructions: formatInstructions },
     });
@@ -457,7 +457,7 @@ export const courseMutationResolvers: CourseResolvers = {
 
     // Create promptTemplate
     const promptTemplate = new PromptTemplate({
-      template: `Design a lesson for a course on "{courseTitle}". The title of the lesson is "{lessonTitle}", and it should cover the following topics: "{topics}". The output should be in markdown format.`,
+      template: `Generate a lesson for a course on "{courseTitle}". The title of the lesson is "{lessonTitle}", and it should cover the following topics: "{topics}". The output should be in markdown format.`,
       inputVariables: ["courseTitle", "lessonTitle", "topics"],
     });
 
