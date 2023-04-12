@@ -30,7 +30,6 @@ const startServer = async () => {
       prisma, // prisma client
       userId: req.headers.userId, // user id from token
       expiry: req.headers.expiry, // expiry from token
-      // token: req.headers.token, // token
       token: req.headers.authorization?.split("Bearer ")[1], // token
     }),
   });

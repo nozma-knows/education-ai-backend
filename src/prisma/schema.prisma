@@ -81,6 +81,7 @@ model UnitLesson {
   unitId    String
   unit      CourseUnit @relation(fields: [unitId], references: [id])
   title     String
+  topics    String
   content   String
   status    Status
 }
