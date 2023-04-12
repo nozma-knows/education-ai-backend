@@ -4,6 +4,7 @@ import {
   CourseResolvers,
   CourseUnit,
   CreateCourseInput,
+  GenerateLessonInput,
   Maybe,
   PrereqTopic,
   Status,
@@ -126,6 +127,7 @@ export const courseMutationResolvers: CourseResolvers = {
       openAIApiKey: process.env.OPENAI_API_KEY,
       temperature: 0,
       modelName: "gpt-3.5-turbo",
+      // modelName: "gpt-4",
     });
 
     // Create model error handling
@@ -163,13 +165,14 @@ export const courseMutationResolvers: CourseResolvers = {
         units: z
           .array(
             z.object({
-              title: z.string().describe("Title of the course unit"),
-              description: z
-                .string()
-                .describe("Description of the course unit"),
+              title: z.string().describe("Title of the unit"),
+              description: z.string().describe("Description of the unit"),
               lessons: z.array(
                 z.object({
-                  title: z.string().describe("Title of the course unit lesson"),
+                  title: z.string().describe("Title of the lesson"),
+                  topics: z
+                    .array(z.string().describe("Topics covered in the lesson"))
+                    .describe("Topics covered in the lesson"),
                 })
               ),
             })
@@ -343,6 +346,7 @@ export const courseMutationResolvers: CourseResolvers = {
             id: lessonId,
             unitId: unit.id,
             title: lesson ? lesson.title : "",
+            topics: lesson ? lesson.topics.toString() : "",
             content: "",
             status: Status.Pending,
           };
@@ -359,66 +363,6 @@ export const courseMutationResolvers: CourseResolvers = {
         },
       });
     });
-
-    // // Create course units
-    // const units: any[] = [];
-    // await prisma.courseUnit.createMany({
-    //   data: parsedResult.units.map((u: CourseUnit) => {
-    //     const unitId = crypto.randomUUID();
-    //     const unit = {
-    //       id: unitId,
-    //       courseId: course.id,
-    //       title: u.title,
-    //       description: u.description,
-    //       lessons: u.lessons,
-    //       status: u.status,
-    //     };
-    //     units.push(unit);
-    //     return {
-    //       id: crypto.randomUUID(),
-    //       courseId: course.id,
-    //       title: unit.title,
-    //       description: unit.description,
-    //       status: Status.Pending,
-    //     };
-    //   }),
-    // });
-
-    // // Create course units error handling
-    // if (!units) {
-    //   throw new Error("Failed to create course units");
-    // }
-
-    // // Create course unit lessons and update units with lessons
-    // units.map(async (unit: CourseUnit) => {
-    //   console.log("unit: ", unit);
-    //   console.log("lessons for unit: ", unit.lessons);
-    //   const lessonIds: string[] = [];
-    //   await prisma.unitLesson.createMany({
-    //     data: unit.lessons.map((lesson: Maybe<UnitLesson>) => {
-    //       console.log("lesson: ", lesson);
-    //       const lessonId = crypto.randomUUID();
-    //       lessonIds.push(lessonId);
-    //       return {
-    //         id: lessonId,
-    //         unitId: unit.id,
-    //         title: lesson ? lesson.title : "",
-    //         content: "",
-    //         status: Status.Pending,
-    //       };
-    //     }),
-    //   });
-    //   await prisma.courseUnit.update({
-    //     where: {
-    //       id: unit.id,
-    //     },
-    //     data: {
-    //       lessons: {
-    //         connect: lessonIds.map((id: string) => ({ id })),
-    //       },
-    //     },
-    //   });
-    // });
 
     // Update course with prereqs and units
     await prisma.course.update({
@@ -462,5 +406,107 @@ export const courseMutationResolvers: CourseResolvers = {
     }
 
     return course;
+  },
+
+  // Generate lesson mutation resolver
+  generateLesson: async (
+    _parent: any,
+    args: { input: GenerateLessonInput },
+    contextValue: Context
+  ) => {
+    // Grab prisma client
+    const { prisma } = contextValue;
+
+    // Grab prisma client error handling
+    if (!prisma) {
+      throw new Error("Failed to find prisma client.");
+    }
+
+    // Grab args
+    const {
+      courseTitle,
+      courseDescription,
+      lessonId,
+      lessonTitle,
+      topics,
+      pastTopics,
+    } = args.input;
+
+    // Grab args error handling
+    if (
+      !courseTitle ||
+      !courseDescription ||
+      !lessonId ||
+      !lessonTitle ||
+      !topics
+    ) {
+      throw new Error("Missing required fields.");
+    }
+
+    // Create model
+    const model = new OpenAI({
+      openAIApiKey: process.env.OPENAI_API_KEY,
+      temperature: 0,
+      modelName: "gpt-3.5-turbo",
+    });
+
+    // Create model error handling
+    if (!model) {
+      throw new Error("Failed to create model");
+    }
+
+    // Create promptTemplate
+    const promptTemplate = new PromptTemplate({
+      template: `Design a lesson for a course with the following title: "{courseTitle}" and description: "{courseDescription}". The title of the lesson is "{lessonTitle}". The topics of the lesson are "{topics}". The output should be in markdown format.`,
+      inputVariables: [
+        "courseTitle",
+        "courseDescription",
+        "lessonTitle",
+        "topics",
+      ],
+    });
+
+    // Create promptTemplate error handling
+    if (!promptTemplate) {
+      throw new Error("Failed to create promptTemplate");
+    }
+
+    // Create prompt
+    const prompt = await promptTemplate.format({
+      courseTitle,
+      courseDescription,
+      lessonTitle,
+      topics,
+    });
+
+    // Create prompt error handling
+    if (!prompt) {
+      throw new Error("Failed to create prompt");
+    }
+
+    // Query openai
+    const result = await model.call(prompt);
+
+    // Query openai error handling
+    if (!result) {
+      throw new Error("Failed to call openai");
+    }
+
+    // Update lesson with content
+    const lesson = await prisma.unitLesson.update({
+      where: {
+        id: lessonId,
+      },
+      data: {
+        content: result,
+      },
+    });
+
+    // Update lesson with content error handling
+    if (!lesson) {
+      throw new Error("Failed to update lesson with content");
+    }
+
+    return lesson;
   },
 };

@@ -77,6 +77,15 @@ export type CreateLoginInput = {
   passwordConfirmation: Scalars["String"];
 };
 
+export type GenerateLessonInput = {
+  courseDescription: Scalars["String"];
+  courseTitle: Scalars["String"];
+  lessonId: Scalars["String"];
+  lessonTitle: Scalars["String"];
+  pastTopics: Scalars["String"];
+  topics: Scalars["String"];
+};
+
 export type Login = {
   __typename?: "Login";
   email: Scalars["String"];
@@ -94,6 +103,7 @@ export type Mutation = {
   createCourse: Course;
   createLogin: Login;
   deleteCourse: Course;
+  generateLesson: UnitLesson;
   login: Session;
   logout: Session;
 };
@@ -108,6 +118,10 @@ export type MutationCreateLoginArgs = {
 
 export type MutationDeleteCourseArgs = {
   id: Scalars["String"];
+};
+
+export type MutationGenerateLessonArgs = {
+  input: GenerateLessonInput;
 };
 
 export type MutationLoginArgs = {
@@ -164,6 +178,7 @@ export type UnitLesson = {
   id: Scalars["ID"];
   status: Status;
   title: Scalars["String"];
+  topics: Scalars["String"];
   unit: CourseUnit;
   unitId: Scalars["String"];
   updatedAt: Scalars["String"];
@@ -294,6 +309,7 @@ export type ResolversTypes = ResolversObject<{
   CourseUnit: ResolverTypeWrapper<CourseUnit>;
   CreateCourseInput: CreateCourseInput;
   CreateLoginInput: CreateLoginInput;
+  GenerateLessonInput: GenerateLessonInput;
   ID: ResolverTypeWrapper<Scalars["ID"]>;
   Login: ResolverTypeWrapper<Login>;
   LoginInput: LoginInput;
@@ -315,6 +331,7 @@ export type ResolversParentTypes = ResolversObject<{
   CourseUnit: CourseUnit;
   CreateCourseInput: CreateCourseInput;
   CreateLoginInput: CreateLoginInput;
+  GenerateLessonInput: GenerateLessonInput;
   ID: Scalars["ID"];
   Login: Login;
   LoginInput: LoginInput;
@@ -428,6 +445,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationDeleteCourseArgs, "id">
   >;
+  generateLesson?: Resolver<
+    ResolversTypes["UnitLesson"],
+    ParentType,
+    ContextType,
+    RequireFields<MutationGenerateLessonArgs, "input">
+  >;
   login?: Resolver<
     ResolversTypes["Session"],
     ParentType,
@@ -498,6 +521,7 @@ export type UnitLessonResolvers<
   id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
   status?: Resolver<ResolversTypes["Status"], ParentType, ContextType>;
   title?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
+  topics?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
   unit?: Resolver<ResolversTypes["CourseUnit"], ParentType, ContextType>;
   unitId?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes["String"], ParentType, ContextType>;

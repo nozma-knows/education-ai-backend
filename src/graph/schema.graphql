@@ -73,6 +73,7 @@ type UnitLesson {
   unitId: String!
   unit: CourseUnit!
   title: String!
+  topics: String!
   content: String!
   status: Status!
 }
@@ -109,6 +110,15 @@ input CreateCourseInput {
   description: String!
 }
 
+input GenerateLessonInput {
+  courseTitle: String!
+  courseDescription: String!
+  lessonId: String!
+  lessonTitle: String!
+  topics: String!
+  pastTopics: String!
+}
+
 type Query {
   users: [User]
   session(id: String!): Session
@@ -122,4 +132,5 @@ type Mutation {
   logout: Session!
   createCourse(input: CreateCourseInput!): Course!
   deleteCourse(id: String!): Course!
+  generateLesson(input: GenerateLessonInput!): UnitLesson!
 }
