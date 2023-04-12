@@ -222,6 +222,7 @@ export const courseMutationResolvers: CourseResolvers = {
       throw new Error("Failed to call openai");
     }
 
+    console.log("result: ", result);
     // Parse result
     const parsedResult = await parser.parse(result);
 
@@ -305,21 +306,33 @@ export const courseMutationResolvers: CourseResolvers = {
     // Create course units
     const units: any[] = [];
     await prisma.courseUnit.createMany({
-      data: parsedResult.units.map((unit: CourseUnit) => ({
-        id: crypto.randomUUID(),
-        courseId: course.id,
-        title: unit.title,
-        description: unit.description,
-        status: Status.Pending,
-      })),
+      data: parsedResult.units.map((u: CourseUnit) => {
+        const unitId = crypto.randomUUID();
+        const unit = {
+          id: unitId,
+          courseId: course.id,
+          title: u.title,
+          description: u.description,
+          lessons: u.lessons,
+          status: Status.Pending,
+        };
+        units.push(unit);
+        return {
+          id: unitId,
+          courseId: course.id,
+          title: u.title,
+          description: u.description,
+          status: Status.Pending,
+        };
+      }),
     });
 
     // Create course units error handling
     if (!units) {
-      throw new Error("Failed to create course units");
+      throw new Error("Failed to create course prereqs");
     }
 
-    // Create course unit lessons and update units with lessons
+    // Create course prereq topics and update prereqs with topics
     units.map(async (unit: CourseUnit) => {
       const lessonIds: string[] = [];
       await prisma.unitLesson.createMany({
@@ -330,7 +343,7 @@ export const courseMutationResolvers: CourseResolvers = {
             id: lessonId,
             unitId: unit.id,
             title: lesson ? lesson.title : "",
-            content: lesson ? lesson.content : "",
+            content: "",
             status: Status.Pending,
           };
         }),
@@ -346,6 +359,66 @@ export const courseMutationResolvers: CourseResolvers = {
         },
       });
     });
+
+    // // Create course units
+    // const units: any[] = [];
+    // await prisma.courseUnit.createMany({
+    //   data: parsedResult.units.map((u: CourseUnit) => {
+    //     const unitId = crypto.randomUUID();
+    //     const unit = {
+    //       id: unitId,
+    //       courseId: course.id,
+    //       title: u.title,
+    //       description: u.description,
+    //       lessons: u.lessons,
+    //       status: u.status,
+    //     };
+    //     units.push(unit);
+    //     return {
+    //       id: crypto.randomUUID(),
+    //       courseId: course.id,
+    //       title: unit.title,
+    //       description: unit.description,
+    //       status: Status.Pending,
+    //     };
+    //   }),
+    // });
+
+    // // Create course units error handling
+    // if (!units) {
+    //   throw new Error("Failed to create course units");
+    // }
+
+    // // Create course unit lessons and update units with lessons
+    // units.map(async (unit: CourseUnit) => {
+    //   console.log("unit: ", unit);
+    //   console.log("lessons for unit: ", unit.lessons);
+    //   const lessonIds: string[] = [];
+    //   await prisma.unitLesson.createMany({
+    //     data: unit.lessons.map((lesson: Maybe<UnitLesson>) => {
+    //       console.log("lesson: ", lesson);
+    //       const lessonId = crypto.randomUUID();
+    //       lessonIds.push(lessonId);
+    //       return {
+    //         id: lessonId,
+    //         unitId: unit.id,
+    //         title: lesson ? lesson.title : "",
+    //         content: "",
+    //         status: Status.Pending,
+    //       };
+    //     }),
+    //   });
+    //   await prisma.courseUnit.update({
+    //     where: {
+    //       id: unit.id,
+    //     },
+    //     data: {
+    //       lessons: {
+    //         connect: lessonIds.map((id: string) => ({ id })),
+    //       },
+    //     },
+    //   });
+    // });
 
     // Update course with prereqs and units
     await prisma.course.update({
