@@ -104,6 +104,8 @@ export type Mutation = {
   createLogin: Login;
   deleteCourse: Course;
   generateLesson: UnitLesson;
+  generatePrereqs: Course;
+  generateUnits: Course;
   login: Session;
   logout: Session;
 };
@@ -122,6 +124,14 @@ export type MutationDeleteCourseArgs = {
 
 export type MutationGenerateLessonArgs = {
   input: GenerateLessonInput;
+};
+
+export type MutationGeneratePrereqsArgs = {
+  id: Scalars["String"];
+};
+
+export type MutationGenerateUnitsArgs = {
+  id: Scalars["String"];
 };
 
 export type MutationLoginArgs = {
@@ -450,6 +460,18 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationGenerateLessonArgs, "input">
+  >;
+  generatePrereqs?: Resolver<
+    ResolversTypes["Course"],
+    ParentType,
+    ContextType,
+    RequireFields<MutationGeneratePrereqsArgs, "id">
+  >;
+  generateUnits?: Resolver<
+    ResolversTypes["Course"],
+    ParentType,
+    ContextType,
+    RequireFields<MutationGenerateUnitsArgs, "id">
   >;
   login?: Resolver<
     ResolversTypes["Session"],
