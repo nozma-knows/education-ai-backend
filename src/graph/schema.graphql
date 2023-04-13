@@ -132,6 +132,7 @@ type Mutation {
   logout: Session!
   createCourse(input: CreateCourseInput!): Course!
   deleteCourse(id: String!): Course!
-  # generatePrereqs(input: Course!): Course!
+  generatePrereqs(id: String!): Course!
+  generateUnits(id: String!): Course!
   generateLesson(input: GenerateLessonInput!): UnitLesson!
 }
