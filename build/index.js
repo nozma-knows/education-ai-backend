@@ -18,6 +18,7 @@ const apollo_server_express_1 = require("apollo-server-express");
 const fs_1 = require("fs");
 const resolvers_1 = require("./graph/resolvers");
 const express_jwt_1 = require("express-jwt");
+const client_1 = require("@prisma/client");
 const typeDefs = (0, fs_1.readFileSync)("./src/graph/schema.graphql", {
     encoding: "utf-8",
 });
@@ -29,19 +30,19 @@ const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
         credentialsRequired: false,
     }));
     const httpServer = (0, http_1.createServer)(app);
+    const prisma = new client_1.PrismaClient();
     const apolloServer = new apollo_server_express_1.ApolloServer({
         typeDefs,
         resolvers: resolvers_1.resolvers,
-        context: ({ req }) => {
-            if (req.auth) {
-                return {
-                    userId: req.auth.userId,
-                    expiry: req.auth.expiry,
-                    token: req.headers.authorization.split("Bearer ")[1],
-                };
-            }
-            return {};
-        },
+        context: ({ req, res }) => __awaiter(void 0, void 0, void 0, function* () {
+            var _a;
+            return ({
+                prisma,
+                userId: req.headers.userId,
+                expiry: req.headers.expiry,
+                token: (_a = req.headers.authorization) === null || _a === void 0 ? void 0 : _a.split("Bearer ")[1], // token
+            });
+        }),
     });
     yield apolloServer.start();
     apolloServer.applyMiddleware({

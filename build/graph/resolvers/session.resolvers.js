@@ -10,16 +10,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sessionMutationResolvers = exports.sessionQueryResolvers = void 0;
-const client_1 = require("@prisma/client");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 exports.sessionQueryResolvers = {
     session: (parents, args, contextValue) => {
+        const { prisma } = contextValue;
         const { id } = args;
         if (!id) {
             throw new Error("Required parameter is missing.");
         }
-        const prisma = new client_1.PrismaClient();
         const session = prisma.session.findUnique({
             where: {
                 id,
@@ -35,13 +34,13 @@ exports.sessionQueryResolvers = {
 exports.sessionMutationResolvers = {
     // Login Mutation
     login: (parent, args, contextValue) => __awaiter(void 0, void 0, void 0, function* () {
+        const { prisma } = contextValue;
         // Grab args
         const { email, password } = args.input;
         // Grab args error handling
         if (!email || !password) {
             throw new Error("Required parameter is missing.");
         }
-        const prisma = new client_1.PrismaClient();
         // Grab login
         const login = yield prisma.login.findUnique({
             where: {
@@ -89,13 +88,12 @@ exports.sessionMutationResolvers = {
     }),
     // Logout Mutaiton
     logout: (parent, args, contextValue) => __awaiter(void 0, void 0, void 0, function* () {
-        // Grab userId from context
-        const { userId, token } = contextValue;
+        const { userId, token, prisma } = contextValue;
+        console.log("contextValue: ", contextValue);
         // Grab userId error handling
         if (!userId) {
             throw new Error("Must be authenticated to call this endpoint.");
         }
-        const prisma = new client_1.PrismaClient();
         // Grab session from token
         const session = yield prisma.session.findUnique({
             where: {

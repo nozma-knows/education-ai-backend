@@ -10,19 +10,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.loginMutationResolvers = void 0;
-const client_1 = require("@prisma/client");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 exports.loginMutationResolvers = {
     // Create Login Mutation Resolver
-    createLogin: (_parent, args) => __awaiter(void 0, void 0, void 0, function* () {
+    createLogin: (_parent, args, contextValue) => __awaiter(void 0, void 0, void 0, function* () {
+        const { prisma } = contextValue;
         // Grab args
         const { firstName, lastName, email, password } = args.input;
         // Grab args error handling
         if (!firstName || !lastName || !email || !password) {
             throw new Error("Required parameter is missing.");
         }
-        const prisma = new client_1.PrismaClient();
         // Create user
         const user = yield prisma.user.create({
             data: {
