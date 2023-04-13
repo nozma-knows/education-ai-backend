@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import {
+  Course,
   CoursePrereq,
   CourseResolvers,
   CourseUnit,
@@ -100,6 +101,28 @@ export const courseQueryResolvers: CourseResolvers = {
 };
 
 export const courseMutationResolvers: CourseResolvers = {
+  // generatePrereqs: async (
+  //   _parent: any,
+  //   args: { course: Course },
+  //   contextValue: Context
+  // ) => {
+  //   // Grab prisma client
+  //   const { prisma } = contextValue;
+
+  //   // Grab prisma client error handling
+  //   if (!prisma) {
+  //     throw new Error("Failed to find prisma client.");
+  //   }
+
+  //   // Grab args
+  //   const { course } = args;
+
+  //   // Grab args error handling
+  //   if (!course) {
+  //     throw new Error("Missing required fields.");
+  //   }
+  // },
+
   // Create course mutation resolver
   createCourse: async (
     _parent: any,
