@@ -38,15 +38,6 @@ model Session {
   token     String   @unique
 }
 
-// model Course {
-//   id        String   @id @default(uuid())
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-//   authorId  String
-//   author    User     @relation(fields: [authorId], references: [id])
-//   content   String
-// }
-
 model PrereqTopic {
   id          String       @id @default(uuid())
   createdAt   DateTime     @default(now())
@@ -86,16 +77,50 @@ model UnitLesson {
   status    Status
 }
 
+model UnitExercise {
+  id        String     @id @default(uuid())
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  unitId    String
+  unit      CourseUnit @relation(fields: [unitId], references: [id])
+  task      String
+  status    Status
+}
+
+model QuizQuestion {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  quizId    String
+  quiz      UnitQuiz @relation(fields: [quizId], references: [id])
+  question  String
+  choices   String[]
+  answer    String
+  status    Status
+}
+
+model UnitQuiz {
+  id        String         @id @default(uuid())
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  unitId    String
+  unit      CourseUnit     @relation(fields: [unitId], references: [id])
+  questions QuizQuestion[]
+  status    Status
+}
+
 model CourseUnit {
-  id          String       @id @default(uuid())
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id          String         @id @default(uuid())
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   courseId    String
-  course      Course       @relation(fields: [courseId], references: [id])
+  course      Course         @relation(fields: [courseId], references: [id])
   title       String
   description String
   status      Status
   lessons     UnitLesson[]
+  exercises   UnitExercise[]
+  quizzes     UnitQuiz[]
 }
 
 model Course {
