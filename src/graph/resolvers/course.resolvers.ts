@@ -53,6 +53,7 @@ export const courseQueryResolvers: CourseResolvers = {
         units: {
           include: {
             lessons: true,
+            exercises: true,
           },
         },
       },
@@ -97,6 +98,40 @@ export const courseQueryResolvers: CourseResolvers = {
     }
 
     return courses;
+  },
+
+  // Courses query resolver
+  exercises: async (
+    _parent: any,
+    args: { unitId: string },
+    contextValue: any
+  ) => {
+    // Grab prisma client
+    const { prisma } = contextValue;
+
+    if (!prisma) {
+      throw new Error("Failed to find prisma client.");
+    }
+
+    // Grab args
+    const { unitId } = args;
+
+    // Grab args error handling
+    if (!unitId) {
+      throw new Error("Missing required fields");
+    }
+
+    // Find courses
+    const exercises = await prisma.unitExercise.findMany({
+      where: { unitId },
+    });
+
+    // Find courses error handling
+    if (!exercises) {
+      throw new Error("Failed to find courses");
+    }
+
+    return exercises;
   },
 };
 
@@ -968,6 +1003,7 @@ export const courseMutationResolvers: CourseResolvers = {
       },
       include: {
         lessons: true,
+        exercises: true,
       },
     });
 
@@ -1092,9 +1128,12 @@ export const courseMutationResolvers: CourseResolvers = {
           connect: exerciseIds.map((id) => ({ id })),
         },
       },
+      include: {
+        exercises: true,
+      },
     });
 
-    return updatedUnit; // Return course
+    return updatedUnit.exercises; // Return course
   },
 
   // Generate Quiz
@@ -1112,17 +1151,17 @@ export const courseMutationResolvers: CourseResolvers = {
     }
 
     // Grab args
-    const { id: unitId } = args;
+    const { id } = args;
 
     // Grab args error handling
-    if (!unitId) {
+    if (!id) {
       throw new Error("Missing required fields.");
     }
 
     // Grab course
     const unit = await prisma.courseUnit.findUnique({
       where: {
-        id: unitId,
+        id,
       },
       include: {
         lessons: true,
@@ -1132,18 +1171,24 @@ export const courseMutationResolvers: CourseResolvers = {
 
     // Grab course error handling
     if (!unit) {
-      throw new Error("Failed to find course.");
+      throw new Error("Failed to find unit.");
     }
 
     // Destructure course
-    const { title, description, lessons, quizzes } = unit;
+    const { title, description, lessons } = unit;
 
     // Destructure course error handling
     if (!title || !description || !lessons) {
       throw new Error("Course is missing required fields.");
     }
 
+    // Grab topics
     const topics = lessons.map((lesson) => lesson.topics).join(" ");
+
+    // Grab topics error handling
+    if (!topics) {
+      throw new Error("Failed to find topics.");
+    }
 
     // Create model
     const model = new OpenAI({
@@ -1217,8 +1262,6 @@ export const courseMutationResolvers: CourseResolvers = {
       throw new Error("Failed to call openai");
     }
 
-    console.log("result: ", result);
-
     // Parse result
     const parsedResult = await parser.parse(result);
 
@@ -1227,49 +1270,76 @@ export const courseMutationResolvers: CourseResolvers = {
       throw new Error("Failed to parse result");
     }
 
-    console.log("parsedResult: ", parsedResult);
+    const quizId = crypto.randomUUID();
+    const quiz = await prisma.unitQuiz.create({
+      data: {
+        id: quizId,
+        unitId: unit.id,
+        status: Status.Pending,
+      },
+    });
 
-    // // Create course prereqs
-    // const exerciseIds: string[] = [];
-    // const exercises = await prisma.unitExercise.createMany({
-    //   data: parsedResult.map((e: UnitExercise) => {
-    //     const exerciseId = crypto.randomUUID();
-    //     exerciseIds.push(exerciseId);
-    //     return {
-    //       id: exerciseId,
-    //       unitId: unitId,
-    //       task: e.task,
-    //       status: Status.Pending,
-    //     };
-    //   }),
-    // });
-
-    const quiz = {
-      id: crypto.randomUUID(),
-      question: parsedResult.question,
-      choices: parsedResult.choices,
-      answer: parsedResult.answer,
-      status: Status.Pending,
-    };
-
-    // Create course prereqs error handling
+    // Create quiz error handling
     if (!quiz) {
       throw new Error("Failed to create unit quiz");
     }
 
-    // Update course with units
-    const updatedUnit = await prisma.courseUnit.update({
+    const questionIds: string[] = [];
+    const quesitons = await prisma.quizQuestion.createMany({
+      data: parsedResult.questions.map((q: QuizQuestion) => {
+        const questionId = crypto.randomUUID();
+        questionIds.push(questionId);
+        return {
+          id: questionId,
+          quizId: quizId,
+          question: q.question,
+          choices: q.choices,
+          answer: q.answer,
+          status: Status.Pending,
+        };
+      }),
+    });
+
+    // Create quiz questions error handling
+    if (!quesitons) {
+      throw new Error("Failed to create unit quiz");
+    }
+
+    const updatedQuiz = await prisma.unitQuiz.update({
       where: {
-        id: unitId,
+        id: quizId,
       },
       data: {
-        quizzes: {
-          create: [quiz],
+        questions: {
+          connect: questionIds.map((id) => ({ id })),
         },
       },
     });
 
-    return updatedUnit; // Return course
+    // Update course with units
+    const updatedUnit = await prisma.courseUnit.update({
+      where: {
+        id,
+      },
+      data: {
+        quizzes: {
+          connect: { id: quizId },
+        },
+      },
+      include: {
+        quizzes: {
+          include: {
+            questions: true,
+          },
+        },
+      },
+    });
+    console.log(
+      "updatedQuiz: ",
+      updatedUnit.quizzes.find((quiz) => quiz.id === quizId)
+    );
+
+    return updatedUnit.quizzes.find((quiz) => quiz.id === quizId); // Return course
   },
 
   // Generate lesson mutation resolver

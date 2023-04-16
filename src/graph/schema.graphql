@@ -106,7 +106,7 @@ type UnitQuiz {
   updatedAt: String!
   unitId: String!
   unit: CourseUnit!
-  questions: QuizQuestion!
+  questions: [QuizQuestion]!
   status: Status!
 }
 
@@ -119,7 +119,7 @@ type CourseUnit {
   title: String!
   description: String!
   lessons: [UnitLesson]!
-  exercises: [UnitExercise]!
+  exercises: [UnitExercise]
   quizzes: [UnitQuiz]!
   status: Status!
 }
@@ -158,6 +158,7 @@ type Query {
   session(id: String!): Session
   course(id: String!): Course
   courses(authorId: String!): [Course]
+  exercises(unitId: String!): [UnitExercise]
 }
 
 type Mutation {
@@ -169,7 +170,7 @@ type Mutation {
   generatePrereqs(id: String!): Course!
   generateUnits(id: String!): Course!
   generateIntendedOutcomes(id: String!): Course!
-  generateExercises(id: String!): UnitExercise!
+  generateExercises(id: String!): [UnitExercise]!
   generateQuiz(id: String!): UnitQuiz!
   generateLesson(input: GenerateLessonInput!): UnitLesson!
 }

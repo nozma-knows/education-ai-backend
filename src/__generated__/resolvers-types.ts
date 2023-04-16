@@ -48,7 +48,7 @@ export type CourseUnit = {
   courseId: Scalars['String'];
   createdAt: Scalars['String'];
   description: Scalars['String'];
-  exercises: Array<Maybe<UnitExercise>>;
+  exercises?: Maybe<Array<Maybe<UnitExercise>>>;
   id: Scalars['ID'];
   lessons: Array<Maybe<UnitLesson>>;
   quizzes: Array<Maybe<UnitQuiz>>;
@@ -97,10 +97,11 @@ export type Mutation = {
   createCourse: Course;
   createLogin: Login;
   deleteCourse: Course;
-  generateExercises: UnitExercise;
+  generateExercises: Array<Maybe<UnitExercise>>;
   generateIntendedOutcomes: Course;
   generateLesson: UnitLesson;
   generatePrereqs: Course;
+  generateQuiz: UnitQuiz;
   generateUnits: Course;
   login: Session;
   logout: Session;
@@ -142,6 +143,11 @@ export type MutationGeneratePrereqsArgs = {
 };
 
 
+export type MutationGenerateQuizArgs = {
+  id: Scalars['String'];
+};
+
+
 export type MutationGenerateUnitsArgs = {
   id: Scalars['String'];
 };
@@ -166,6 +172,7 @@ export type Query = {
   __typename?: 'Query';
   course?: Maybe<Course>;
   courses?: Maybe<Array<Maybe<Course>>>;
+  exercises?: Maybe<Array<Maybe<UnitExercise>>>;
   session?: Maybe<Session>;
   users?: Maybe<Array<Maybe<User>>>;
 };
@@ -178,6 +185,11 @@ export type QueryCourseArgs = {
 
 export type QueryCoursesArgs = {
   authorId: Scalars['String'];
+};
+
+
+export type QueryExercisesArgs = {
+  unitId: Scalars['String'];
 };
 
 
@@ -238,7 +250,7 @@ export type UnitQuiz = {
   __typename?: 'UnitQuiz';
   createdAt: Scalars['String'];
   id: Scalars['ID'];
-  questions: QuizQuestion;
+  questions: Array<Maybe<QuizQuestion>>;
   status: Status;
   unit: CourseUnit;
   unitId: Scalars['String'];
@@ -405,7 +417,7 @@ export type CourseUnitResolvers<ContextType = Context, ParentType extends Resolv
   courseId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  exercises?: Resolver<Array<Maybe<ResolversTypes['UnitExercise']>>, ParentType, ContextType>;
+  exercises?: Resolver<Maybe<Array<Maybe<ResolversTypes['UnitExercise']>>>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   lessons?: Resolver<Array<Maybe<ResolversTypes['UnitLesson']>>, ParentType, ContextType>;
   quizzes?: Resolver<Array<Maybe<ResolversTypes['UnitQuiz']>>, ParentType, ContextType>;
@@ -426,10 +438,11 @@ export type MutationResolvers<ContextType = Context, ParentType extends Resolver
   createCourse?: Resolver<ResolversTypes['Course'], ParentType, ContextType, RequireFields<MutationCreateCourseArgs, 'input'>>;
   createLogin?: Resolver<ResolversTypes['Login'], ParentType, ContextType, RequireFields<MutationCreateLoginArgs, 'input'>>;
   deleteCourse?: Resolver<ResolversTypes['Course'], ParentType, ContextType, RequireFields<MutationDeleteCourseArgs, 'id'>>;
-  generateExercises?: Resolver<ResolversTypes['UnitExercise'], ParentType, ContextType, RequireFields<MutationGenerateExercisesArgs, 'id'>>;
+  generateExercises?: Resolver<Array<Maybe<ResolversTypes['UnitExercise']>>, ParentType, ContextType, RequireFields<MutationGenerateExercisesArgs, 'id'>>;
   generateIntendedOutcomes?: Resolver<ResolversTypes['Course'], ParentType, ContextType, RequireFields<MutationGenerateIntendedOutcomesArgs, 'id'>>;
   generateLesson?: Resolver<ResolversTypes['UnitLesson'], ParentType, ContextType, RequireFields<MutationGenerateLessonArgs, 'input'>>;
   generatePrereqs?: Resolver<ResolversTypes['Course'], ParentType, ContextType, RequireFields<MutationGeneratePrereqsArgs, 'id'>>;
+  generateQuiz?: Resolver<ResolversTypes['UnitQuiz'], ParentType, ContextType, RequireFields<MutationGenerateQuizArgs, 'id'>>;
   generateUnits?: Resolver<ResolversTypes['Course'], ParentType, ContextType, RequireFields<MutationGenerateUnitsArgs, 'id'>>;
   login?: Resolver<ResolversTypes['Session'], ParentType, ContextType, RequireFields<MutationLoginArgs, 'input'>>;
   logout?: Resolver<ResolversTypes['Session'], ParentType, ContextType>;
@@ -449,6 +462,7 @@ export type PrereqTopicResolvers<ContextType = Context, ParentType extends Resol
 export type QueryResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
   course?: Resolver<Maybe<ResolversTypes['Course']>, ParentType, ContextType, RequireFields<QueryCourseArgs, 'id'>>;
   courses?: Resolver<Maybe<Array<Maybe<ResolversTypes['Course']>>>, ParentType, ContextType, RequireFields<QueryCoursesArgs, 'authorId'>>;
+  exercises?: Resolver<Maybe<Array<Maybe<ResolversTypes['UnitExercise']>>>, ParentType, ContextType, RequireFields<QueryExercisesArgs, 'unitId'>>;
   session?: Resolver<Maybe<ResolversTypes['Session']>, ParentType, ContextType, RequireFields<QuerySessionArgs, 'id'>>;
   users?: Resolver<Maybe<Array<Maybe<ResolversTypes['User']>>>, ParentType, ContextType>;
 }>;
@@ -499,7 +513,7 @@ export type UnitLessonResolvers<ContextType = Context, ParentType extends Resolv
 export type UnitQuizResolvers<ContextType = Context, ParentType extends ResolversParentTypes['UnitQuiz'] = ResolversParentTypes['UnitQuiz']> = ResolversObject<{
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  questions?: Resolver<ResolversTypes['QuizQuestion'], ParentType, ContextType>;
+  questions?: Resolver<Array<Maybe<ResolversTypes['QuizQuestion']>>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['Status'], ParentType, ContextType>;
   unit?: Resolver<ResolversTypes['CourseUnit'], ParentType, ContextType>;
   unitId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
