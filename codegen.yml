@@ -9,6 +9,6 @@ generates:
     config:
       maybeValue: T | null | undefined
       useIndexSignature: true
-      contextType: ../resolvers/types#Context
+      contextType: ../graph/resolvers/types#Context
       scalars:
         Date: string
