@@ -54,6 +54,11 @@ export const courseQueryResolvers: CourseResolvers = {
           include: {
             lessons: true,
             exercises: true,
+            quizzes: {
+              include: {
+                questions: true,
+              },
+            },
           },
         },
       },
@@ -1334,10 +1339,6 @@ export const courseMutationResolvers: CourseResolvers = {
         },
       },
     });
-    console.log(
-      "updatedQuiz: ",
-      updatedUnit.quizzes.find((quiz) => quiz.id === quizId)
-    );
 
     return updatedUnit.quizzes.find((quiz) => quiz.id === quizId); // Return course
   },
