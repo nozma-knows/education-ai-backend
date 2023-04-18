@@ -81,6 +81,21 @@ exports.courseQueryResolvers = {
         return courses;
     }),
     // Courses query resolver
+    allCourses: (_parent, args, contextValue) => __awaiter(void 0, void 0, void 0, function* () {
+        // Grab prisma client
+        const { prisma } = contextValue;
+        if (!prisma) {
+            throw new Error("Failed to find prisma client.");
+        }
+        // Find courses
+        const courses = yield prisma.course.findMany();
+        // Find courses error handling
+        if (!courses) {
+            throw new Error("Failed to find courses");
+        }
+        return courses;
+    }),
+    // Courses query resolver
     exercises: (_parent, args, contextValue) => __awaiter(void 0, void 0, void 0, function* () {
         // Grab prisma client
         const { prisma } = contextValue;
