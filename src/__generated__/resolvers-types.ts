@@ -170,6 +170,7 @@ export type PrereqTopic = {
 
 export type Query = {
   __typename?: 'Query';
+  allCourses?: Maybe<Array<Maybe<Course>>>;
   course?: Maybe<Course>;
   courses?: Maybe<Array<Maybe<Course>>>;
   exercises?: Maybe<Array<Maybe<UnitExercise>>>;
@@ -460,6 +461,7 @@ export type PrereqTopicResolvers<ContextType = Context, ParentType extends Resol
 }>;
 
 export type QueryResolvers<ContextType = Context, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
+  allCourses?: Resolver<Maybe<Array<Maybe<ResolversTypes['Course']>>>, ParentType, ContextType>;
   course?: Resolver<Maybe<ResolversTypes['Course']>, ParentType, ContextType, RequireFields<QueryCourseArgs, 'id'>>;
   courses?: Resolver<Maybe<Array<Maybe<ResolversTypes['Course']>>>, ParentType, ContextType, RequireFields<QueryCoursesArgs, 'authorId'>>;
   exercises?: Resolver<Maybe<Array<Maybe<ResolversTypes['UnitExercise']>>>, ParentType, ContextType, RequireFields<QueryExercisesArgs, 'unitId'>>;

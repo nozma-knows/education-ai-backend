@@ -15,7 +15,8 @@ export const loginMutationResolvers: LoginResolvers = {
   ) => {
     const { prisma } = contextValue;
     // Grab args
-    const { firstName, lastName, email, password } = args.input;
+    const { firstName, lastName, email, password, passwordConfirmation } =
+      args.input;
 
     // Grab args error handling
     if (!firstName || !lastName || !email || !password) {
@@ -24,7 +25,7 @@ export const loginMutationResolvers: LoginResolvers = {
     // Create user
     const user = await prisma.user.create({
       data: {
-        // id: crypto.randomUUID(),
+        id: crypto.randomUUID(),
         firstName,
         lastName,
         email,
@@ -34,7 +35,7 @@ export const loginMutationResolvers: LoginResolvers = {
 
     // Create user error handling
     if (!user) {
-      throw new Error("User not found.");
+      throw new Error("Error creating user.");
     }
 
     // Hash password

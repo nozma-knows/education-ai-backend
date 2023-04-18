@@ -158,6 +158,7 @@ type Query {
   session(id: String!): Session
   course(id: String!): Course
   courses(authorId: String!): [Course]
+  allCourses: [Course]
   exercises(unitId: String!): [UnitExercise]
 }
 
