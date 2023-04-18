@@ -106,6 +106,26 @@ export const courseQueryResolvers: CourseResolvers = {
   },
 
   // Courses query resolver
+  allCourses: async (_parent: any, args: null, contextValue: any) => {
+    // Grab prisma client
+    const { prisma } = contextValue;
+
+    if (!prisma) {
+      throw new Error("Failed to find prisma client.");
+    }
+
+    // Find courses
+    const courses = await prisma.course.findMany();
+
+    // Find courses error handling
+    if (!courses) {
+      throw new Error("Failed to find courses");
+    }
+
+    return courses;
+  },
+
+  // Courses query resolver
   exercises: async (
     _parent: any,
     args: { unitId: string },
